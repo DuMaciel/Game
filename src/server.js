@@ -12,6 +12,7 @@ const io = new Server(server);
 
 const TICK_TIME = (1 / 30) * 1000;
 const FRUIT_TIME = 5 * 1000;
+const FRUIT_MAX = 4;
 
 const FRUIT_TABLE = [
   { score: 1, weight: 32 },
@@ -20,8 +21,6 @@ const FRUIT_TABLE = [
   { score: 5, weight: 2 },
   { score: 8, weight: 1 },
 ];
-
-
 
 app.use('/', express.static('public'));
 
@@ -36,7 +35,11 @@ io.on('connection', (socket) => {
 
   socket.on('move', (direction) => {
     player.move(direction);
-    console.log(player);
+    const caughtFruits = fruits.filter((fruit) => player.position.equals(fruit.position));
+    caughtFruits.forEach((fruit) => {
+      player.score += fruit.score;
+      fruits.splice(fruits.indexOf(fruit), 1);
+    });
   });
 
   socket.on('disconnect', () => {
@@ -53,8 +56,11 @@ server.listen(3000, () => {
 });
 
 setInterval(() => {
-  const { score } = FRUIT_TABLE[randomWithWeight(FRUIT_TABLE)]
+  if (fruits.length >= FRUIT_MAX) return; // return early
+
+  const { score } = FRUIT_TABLE[randomWithWeight(FRUIT_TABLE)];
   const fruit = new Fruit(score);
+
   fruits.push(fruit);
 }, FRUIT_TIME);
 
